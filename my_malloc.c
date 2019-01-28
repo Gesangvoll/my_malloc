@@ -21,8 +21,8 @@ unsigned long get_data_segment_free_space_size() {
 }
 
 void *splitButSmallSpace(free_node *cur, size_t size) {
-  printf("Can not split! size in call is %lu and cur->size is %lu\n", (unsigned long) size,
-	 (unsigned long) cur->size);
+  //  printf("Can not split! size in call is %lu and cur->size is %lu\n", (unsigned long) size,
+  //   (unsigned long) cur->size);
   if (cur == head) {
     if (cur->next != NULL) {
       cur->next->pre = NULL;
@@ -47,8 +47,8 @@ void *splitEnoughSpace(free_node *cur, size_t size) {
   // size, (unsigned long) cur->size);
   free_node *newOccupiedNode = (free_node *) (cur->addressForUser + cur->size
 					      - size - sizeof(free_node));
-  newOccupiedNode->pre = cur;
-  newOccupiedNode->next = cur->next;
+  newOccupiedNode->pre = NULL;
+  newOccupiedNode->next = NULL;
   newOccupiedNode->size = size;
   newOccupiedNode->addressForUser = (void *) newOccupiedNode + sizeof(free_node);
   cur->size -= size + sizeof(free_node);
@@ -57,7 +57,7 @@ void *splitEnoughSpace(free_node *cur, size_t size) {
 }
 
 void *splitAndMalloc(free_node *cur, size_t size) {
-  if (cur->size <= size + sizeof(free_node) + 8) { // Discard the so small part
+  if (cur->size <= size + sizeof(free_node)) { // Discard the so small part
     return splitButSmallSpace(cur, size);
   } else {
     return splitEnoughSpace(cur, size);
@@ -98,7 +98,8 @@ void *ff_malloc(size_t size) {
 
 void traverseToFindtoFree(free_node *toFree) {
   free_node *cur = head;
-  while (cur != NULL) {   
+  while (cur != NULL) {
+    // printf("Loooooooop");
     if (cur->next != NULL) {
       if ((unsigned long)cur->next > (unsigned long)toFree) {
 	break;
@@ -142,6 +143,8 @@ void generalFree(free_node *toFree) {
 
 void merge(free_node *toMerge) {
   // Here head could not be NULL
+  /*Here I choose to merge toMerge's pre node and the possible toMerge's pre node's
+   next node*/
   if (toMerge->pre != NULL) { // toMerge is not the head
     if (toMerge->pre->addressForUser + toMerge->pre->size == (void *) toMerge) {
       toMerge->pre->size += toMerge->size + sizeof(free_node);
@@ -152,7 +155,7 @@ void merge(free_node *toMerge) {
       toMerge = toMerge->pre;
     }
   }
-
+  // merge operation above may
   if (toMerge->next != NULL) {
     if (toMerge->addressForUser + toMerge->size == (void *) toMerge->next) {
       toMerge->size += toMerge->next->size + sizeof(free_node);
@@ -176,11 +179,15 @@ void *bf_malloc(size_t size) {
   free_node *minAvaiNode = NULL;
   unsigned long min = INT_MAX;
   while (cur != NULL) {
-    if (cur->size >= size) {
+    // printf("XXXXXXXXXXX");
+    if (cur->size > size) {
       if (cur->size < min) {
 	min = cur->size;
 	minAvaiNode = cur;
       }
+    } else if (cur->size == size) {
+      minAvaiNode = cur;
+      break;
     }
     cur = cur->next;
   }
