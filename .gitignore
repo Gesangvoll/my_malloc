@@ -1,9 +1,0 @@
-.bash_history
-.ssh
-.bash_logout
-.bashrc
-.cache/
-.gnupg/
-*.o
-.sudo_as_admin_successful
-
